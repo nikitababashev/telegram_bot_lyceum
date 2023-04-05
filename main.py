@@ -14,14 +14,51 @@ async def start(update, context):
 
 
 async def first_response(update, context):
-    context.user_data['name'] = name = update.message.text
-    await update.message.reply_text(f"Приятно познакомиться, {context.user_data['name']}!\n"
-                                    f"Меня зовут Бот-Кеша.\n"
-                                    f"Хочешь ли ты попробовать попрактиковаться в решение задач "
-                                    f"из огэ или егэ по программированию?\n"
-                                    f"Или же изначально ты хочешь прочитать теорию?\n"
-                                    f"Чтобы выбрать, напиши практика/теория")
-    return 'distribution'
+    context.user_data['name'] = update.message.text
+    if context.user_data['name'] == update.message.chat.first_name:
+        await update.message.reply_text(f"Приятно познакомиться, {context.user_data['name']}!\n"
+                                        f"Меня зовут Бот-Кеша.\n"
+                                        f"Хочешь ли ты попробовать попрактиковаться в решение задач "
+                                        f"из огэ или егэ по программированию?\n"
+                                        f"Или же изначально ты хочешь прочитать теорию?\n"
+                                        f"Чтобы выбрать, напиши: практика / теория")
+        return 'distribution'
+    else:
+        await update.message.reply_text(f"Мне кажется, что ты хочешь меня обмануть!\n"
+                                        f"Думаю, что тебя зовут {update.message.chat.first_name}"
+                                        f", а не {context.user_data['name']}!\n"
+                                        f"Верно?")
+        return 'distribution_fr'
+
+
+async def distribution_fr(update, context):
+    answer = update.message.text
+    if answer == 'да' or answer == 'верно':
+        context.user_data['fake_name'] = context.user_data['name']
+        context.user_data['name'] = update.message.chat.first_name
+        await update.message.reply_text(f"Мы - боты, развитые объекты, нас не так-то просто "
+                                        f"обмануть!\n"
+                                        f"Приятно познакомиться,"
+                                        f" {context.user_data['name']}!\n"
+                                        f"Меня зовут Бот-Кеша.\n"
+                                        f"Хочешь ли ты попробовать попрактиковаться в решение задач"
+                                        f" из огэ или егэ по программированию?\n"
+                                        f"Или же изначально ты хочешь прочитать теорию?\n"
+                                        f"Чтобы выбрать, напиши: практика / теория")
+        return 'distribution'
+    elif answer == 'нет' or answer == 'не верно':
+        await update.message.reply_text(f"Прошу прощения, мы - боты, еще не до конца развиты!\n"
+                                        f"Приятно познакомиться, {context.user_data['name']}!\n"
+                                        f"Меня зовут Бот-Кеша.\n"
+                                        f"Хочешь ли ты попробовать попрактиковаться в решение задач "
+                                        f"из огэ или егэ по программированию?\n"
+                                        f"Или же изначально ты хочешь прочитать теорию?\n"
+                                        f"Чтобы выбрать, напиши: практика / теория")
+        return 'distribution'
+    else:
+        await update.message.reply_text(f"Извини, но я тебя не понимаю.\n"
+                                        f"Ответь, пожалуйста, в формате: да / нет")
+        return 'distribution_fr'
 
 
 async def distribution(update, context):
@@ -35,11 +72,36 @@ async def distribution(update, context):
 
 
 async def oge(update, context):
-    print('огэ')
+    await update.message.reply_text('Вы выбрали - ОГЭ!\n'
+                                    'Выберите сложность:\n'
+                                    '1) лёгкая\n'
+                                    '2) средняя\n'
+                                    '3) сложная', reply_markup=ReplyKeyboardRemove())
+    print('2')
+    return 'distribution_oge'
+
+
+async def distribution_oge(update, context):
+    print('1')
+    answer = update.message.text
+    if answer == '1' or answer == 'лёгкая':
+        await update.message.reply_text('Лёгкий уровень сложности:')
+        pass
+    if answer == '2' or answer == 'средняя':
+        await update.message.reply_text('Средний уровень сложности:')
+        pass
+    if answer == '3' or answer == 'сложная':
+        await update.message.reply_text('Сложный уровень сложности:')
+        pass
 
 
 async def ege(update, context):
-    print('егэ')
+    await update.message.reply_text('Вы выбрали - ОГЭ!\n'
+                                    'Выберите сложность:\n'
+                                    '1) Лёгкая\n'
+                                    '2) Средняя\n'
+                                    '3) Сложная', reply_markup=ReplyKeyboardRemove())
+    answer = update.message.text
 
 
 async def skip(update, context):
@@ -56,7 +118,9 @@ def main():
         entry_points=[CommandHandler('start', start)],
         states={
             'start_dialog': [MessageHandler(filters.TEXT & ~filters.COMMAND, first_response)],
-            'distribution': [MessageHandler(filters.TEXT & ~filters.COMMAND, distribution)]
+            'distribution': [MessageHandler(filters.TEXT & ~filters.COMMAND, distribution)],
+            'distribution_fr': [MessageHandler(filters.TEXT & ~filters.COMMAND, distribution_fr)],
+            'distribution_oge': [MessageHandler(filters.TEXT & ~filters.COMMAND, distribution_oge)]
         },
         fallbacks=[CommandHandler('skip', skip)]
     )
