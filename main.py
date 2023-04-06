@@ -18,8 +18,8 @@ async def first_response(update, context):
     if context.user_data['name'] == update.message.chat.first_name:
         await update.message.reply_text(f"Приятно познакомиться, {context.user_data['name']}!\n"
                                         f"Меня зовут Бот-Кеша.\n"
-                                        f"Хочешь ли ты попробовать попрактиковаться в решение задач "
-                                        f"из огэ или егэ по программированию?\n"
+                                        f"Хочешь ли ты попробовать попрактиковаться в решение задач"
+                                        f" из огэ или егэ по программированию?\n"
                                         f"Или же изначально ты хочешь прочитать теорию?\n"
                                         f"Чтобы выбрать, напиши: практика / теория")
         return 'distribution'
@@ -83,10 +83,28 @@ async def distribution_oge_or_ege(update, context):
                                         '3) сложная', reply_markup=ReplyKeyboardRemove())
         return 'distribution_oge'
     elif answer == 'ЕГЭ':
+        await update.message.reply_text('Вы выбрали - ОГЭ!\n'
+                                        'Выберите сложность:\n'
+                                        '1) лёгкая\n'
+                                        '2) средняя\n'
+                                        '3) сложная', reply_markup=ReplyKeyboardRemove())
         return 'distribution_ege'
 
 
 async def distribution_oge(update, context):
+    answer = update.message.text
+    if answer == '1' or answer == 'лёгкая':
+        await update.message.reply_text('Лёгкий уровень сложности:')
+        pass
+    if answer == '2' or answer == 'средняя':
+        await update.message.reply_text('Средний уровень сложности:')
+        pass
+    if answer == '3' or answer == 'сложная':
+        await update.message.reply_text('Сложный уровень сложности:')
+        pass
+
+
+async def distribution_ege(update, context):
     answer = update.message.text
     if answer == '1' or answer == 'лёгкая':
         await update.message.reply_text('Лёгкий уровень сложности:')
@@ -114,6 +132,7 @@ def main():
             'distribution': [MessageHandler(filters.TEXT & ~filters.COMMAND, distribution)],
             'distribution_fr': [MessageHandler(filters.TEXT & ~filters.COMMAND, distribution_fr)],
             'distribution_oge': [MessageHandler(filters.TEXT & ~filters.COMMAND, distribution_oge)],
+            'distribution_ege': [MessageHandler(filters.TEXT & ~filters.COMMAND, distribution_ege)],
             'distribution_oge_or_ege': [MessageHandler(filters.TEXT & ~filters.COMMAND,
                                                        distribution_oge_or_ege)]
         },
