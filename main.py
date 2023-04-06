@@ -64,25 +64,29 @@ async def distribution_fr(update, context):
 async def distribution(update, context):
     answer = update.message.text
     if answer == 'практика':
-        reply_keyboard = [['/oge', '/ege']]
-        markup = ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=False)
+        reply_keyboard = [['ОГЭ', 'ЕГЭ']]
+        markup = ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=False,
+                                     input_field_placeholder="любим гусей")
         await update.message.reply_text('Хорошо, вижу, что ты уверен(а) в своих силах!\n'
                                         'Выбери из какого экзамена ты хочешь порешать задачи.',
                                         reply_markup=markup)
+    return 'distribution_oge_or_ege'
 
 
-async def oge(update, context):
-    await update.message.reply_text('Вы выбрали - ОГЭ!\n'
-                                    'Выберите сложность:\n'
-                                    '1) лёгкая\n'
-                                    '2) средняя\n'
-                                    '3) сложная', reply_markup=ReplyKeyboardRemove())
-    print('2')
-    return 'distribution_oge'
+async def distribution_oge_or_ege(update, context):
+    answer = update.message.text
+    if answer == 'ОГЭ':
+        await update.message.reply_text('Вы выбрали - ОГЭ!\n'
+                                        'Выберите сложность:\n'
+                                        '1) лёгкая\n'
+                                        '2) средняя\n'
+                                        '3) сложная', reply_markup=ReplyKeyboardRemove())
+        return 'distribution_oge'
+    elif answer == 'ЕГЭ':
+        return 'distribution_ege'
 
 
 async def distribution_oge(update, context):
-    print('1')
     answer = update.message.text
     if answer == '1' or answer == 'лёгкая':
         await update.message.reply_text('Лёгкий уровень сложности:')
@@ -95,15 +99,6 @@ async def distribution_oge(update, context):
         pass
 
 
-async def ege(update, context):
-    await update.message.reply_text('Вы выбрали - ОГЭ!\n'
-                                    'Выберите сложность:\n'
-                                    '1) Лёгкая\n'
-                                    '2) Средняя\n'
-                                    '3) Сложная', reply_markup=ReplyKeyboardRemove())
-    answer = update.message.text
-
-
 async def skip(update, context):
     await update.message.reply_text('Какая погода у вас за окном?')
     return 2
@@ -112,15 +107,15 @@ async def skip(update, context):
 def main():
     TOKEN = '6036045502:AAEN6Wb7h18Kfle3YDfropM7ZqIawZhH10c'
     application = Application.builder().token(TOKEN).build()
-    application.add_handler(CommandHandler('oge', oge))
-    application.add_handler(CommandHandler('ege', ege))
     conv_handler = ConversationHandler(
         entry_points=[CommandHandler('start', start)],
         states={
             'start_dialog': [MessageHandler(filters.TEXT & ~filters.COMMAND, first_response)],
             'distribution': [MessageHandler(filters.TEXT & ~filters.COMMAND, distribution)],
             'distribution_fr': [MessageHandler(filters.TEXT & ~filters.COMMAND, distribution_fr)],
-            'distribution_oge': [MessageHandler(filters.TEXT & ~filters.COMMAND, distribution_oge)]
+            'distribution_oge': [MessageHandler(filters.TEXT & ~filters.COMMAND, distribution_oge)],
+            'distribution_oge_or_ege': [MessageHandler(filters.TEXT & ~filters.COMMAND,
+                                                       distribution_oge_or_ege)]
         },
         fallbacks=[CommandHandler('skip', skip)]
     )
