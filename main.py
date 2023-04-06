@@ -1,19 +1,38 @@
 import logging
 from telegram.ext import Application, MessageHandler, filters, CommandHandler, ConversationHandler
 from telegram import ReplyKeyboardMarkup, ReplyKeyboardRemove
+import sqlite3
 
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
                     level=logging.DEBUG)
 
 logger = logging.getLogger(__name__)
 
+con = sqlite3.connect('user_stat.db')
+cur = con.cursor()
+check_registration_users_db = cur.execute("""SELECT id_users FROM statistics""").fetchall()
+check_registration_users = []
+for id_user_db in check_registration_users_db:
+    check_registration_users.append(id_user_db[0])
+
 
 async def start(update, context):
-    await update.message.reply_text('Привет! Как тебя зовут?')
-    return 'start_dialog'
+    if update.message.chat.id in check_registration_users:
+        name_in_db = cur.execute(f"""SELECT really_name FROM statistics
+                                WHERE id_users = {update.message.chat.id}""").fetchall()
+        context.user_data['name'] = name_in_db[0][0]
+        await update.message.reply_text(f"Приятно снова видеть тебя с нами,"
+                                        f" {context.user_data['name']}!\n"
+                                        f"С тобой по-прежнему дружелюбный Бот-Кеша!"
+                                        f"С чего хочешь начать, практика или теория?")
+        return 'distribution'
+    else:
+        await update.message.reply_text('Привет! Как тебя зовут?')
+        return 'start_dialog'
 
 
 async def first_response(update, context):
+    context.user_data['id_user'] = update.message.chat.id
     context.user_data['name'] = update.message.text
     if context.user_data['name'] == update.message.chat.first_name:
         await update.message.reply_text(f"Приятно познакомиться, {context.user_data['name']}!\n"
@@ -50,8 +69,8 @@ async def distribution_fr(update, context):
         await update.message.reply_text(f"Прошу прощения, мы - боты, еще не до конца развиты!\n"
                                         f"Приятно познакомиться, {context.user_data['name']}!\n"
                                         f"Меня зовут Бот-Кеша.\n"
-                                        f"Хочешь ли ты попробовать попрактиковаться в решение задач "
-                                        f"из огэ или егэ по программированию?\n"
+                                        f"Хочешь ли ты попробовать попрактиковаться в решение задач"
+                                        f" из огэ или егэ по программированию?\n"
                                         f"Или же изначально ты хочешь прочитать теорию?\n"
                                         f"Чтобы выбрать, напиши: практика / теория")
         return 'distribution'
@@ -63,13 +82,23 @@ async def distribution_fr(update, context):
 
 async def distribution(update, context):
     answer = update.message.text
+    if update.message.chat.id not in check_registration_users:
+        cur.execute(f"""INSERT INTO statistics(id_users, really_name)
+                        VALUES({context.user_data['id_user']}, '{context.user_data['name']}')""")
+        con.commit()
     if answer == 'практика':
         reply_keyboard = [['ОГЭ', 'ЕГЭ']]
         markup = ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=False,
-                                     input_field_placeholder="любим гусей")
-        await update.message.reply_text('Хорошо, вижу, что ты уверен(а) в своих силах!\n'
-                                        'Выбери из какого экзамена ты хочешь порешать задачи.',
-                                        reply_markup=markup)
+                                     input_field_placeholder="любим гусей!")
+        if update.message.chat.id in check_registration_users:
+            await update.message.reply_text('Хорошо, вижу, что ты также уверен в своих силах,'
+                                            ' как и в прошлый раз!\n'
+                                            'Выбери из какого экзамена ты хочешь порешать задачи.',
+                                            reply_markup=markup)
+        else:
+            await update.message.reply_text('Хорошо, вижу, что ты уверен(а) в своих силах!\n'
+                                            'Выбери из какого экзамена ты хочешь порешать задачи.',
+                                            reply_markup=markup)
     return 'distribution_oge_or_ege'
 
 
