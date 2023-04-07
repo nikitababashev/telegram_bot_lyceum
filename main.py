@@ -186,9 +186,13 @@ async def distribution_ege(update, context):
 
 
 async def sdialog(update, context):
+    reply_keyboard = [['/start']]
+    markup = ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=False,
+                                 input_field_placeholder="скучаю по тебе!")
     await update.message.reply_text('Надеюсь ты узнал много нового!\n'
                                     'До скорых встреч!\n'
-                                    'Возвращайся к нам через команду /start')
+                                    'Возвращайся к нам через команду /start',
+                                    reply_markup=markup)
     return ConversationHandler.END
 
 
