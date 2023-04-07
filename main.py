@@ -152,17 +152,17 @@ async def distribution_oge(update, context):
         await update.message.reply_text('Лёгкий уровень сложности:',
                                         reply_markup=ReplyKeyboardRemove())
         print(1)
-        bot.send_photo(update.message.chat.id, photo=open('images/test_img.png', 'rb'),
+        bot.send_photo(update.message.chat.id, photo=open('test_img.png', 'rb'),
                        caption='...answer...')
     if answer == '2' or answer == 'средняя':
         await update.message.reply_text('Средний уровень сложности:',
                                         reply_markup=ReplyKeyboardRemove())
-        bot.send_photo(update.message.chat.id, photo=open('images/test_img.png', 'rb'),
+        bot.send_photo(update.message.chat.id, photo=open('test_img.png', 'rb'),
                        caption='...answer...')
     if answer == '3' or answer == 'сложная':
         await update.message.reply_text('Сложный уровень сложности:',
                                         reply_markup=ReplyKeyboardRemove())
-        bot.send_photo(update.message.chat.id, photo=open('images/test_img.png', 'rb'),
+        bot.send_photo(update.message.chat.id, photo=open('test_img.png', 'rb'),
                        caption='...answer...')
 
 
@@ -171,23 +171,24 @@ async def distribution_ege(update, context):
     if answer == '1' or answer == 'лёгкая':
         await update.message.reply_text('Лёгкий уровень сложности:',
                                         reply_markup=ReplyKeyboardRemove())
-        bot.send_photo(update.message.chat.id, photo=open('images/test_img.png', 'rb'),
+        bot.send_photo(update.message.chat.id, photo=open('test_img.png', 'rb'),
                        caption='...answer...')
     if answer == '2' or answer == 'средняя':
         await update.message.reply_text('Средний уровень сложности:',
                                         reply_markup=ReplyKeyboardRemove())
-        bot.send_photo(update.message.chat.id, photo=open('images/test_img.png', 'rb'),
+        bot.send_photo(update.message.chat.id, photo=open('test_img.png', 'rb'),
                        caption='...answer...')
     if answer == '3' or answer == 'сложная':
         await update.message.reply_text('Сложный уровень сложности:',
                                         reply_markup=ReplyKeyboardRemove())
-        bot.send_photo(update.message.chat.id, photo=open('images/test_img.png', 'rb'),
+        bot.send_photo(update.message.chat.id, photo=open('test_img.png', 'rb'),
                        caption='...answer...')
 
 
 async def sdialog(update, context):
     await update.message.reply_text('Надеюсь ты узнал много нового!\n'
-                                    ' До скорых встреч!')
+                                    'До скорых встреч!\n'
+                                    'Возвращайся к нам через команду /start')
     return ConversationHandler.END
 
 
