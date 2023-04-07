@@ -10,21 +10,23 @@ logger = logging.getLogger(__name__)
 
 con = sqlite3.connect('user_stat.db')
 cur = con.cursor()
-check_registration_users_db = cur.execute("""SELECT id_users FROM statistics""").fetchall()
 check_registration_users = []
-for id_user_db in check_registration_users_db:
-    check_registration_users.append(id_user_db[0])
 
 
 async def start(update, context):
+    check_registration_users_db = cur.execute("""SELECT id_users FROM statistics""").fetchall()
+    for id_user_db in check_registration_users_db:
+        check_registration_users.append(id_user_db[0])
     if update.message.chat.id in check_registration_users:
         name_in_db = cur.execute(f"""SELECT really_name FROM statistics
                                 WHERE id_users = {update.message.chat.id}""").fetchall()
         context.user_data['name'] = name_in_db[0][0]
         await update.message.reply_text(f"Приятно снова видеть тебя с нами,"
                                         f" {context.user_data['name']}!\n"
-                                        f"С тобой по-прежнему дружелюбный Бот-Кеша!"
-                                        f"С чего хочешь начать, практика или теория?")
+                                        f"С тобой по-прежнему дружелюбный Бот-Кеша!\n"
+                                        f"С чего хочешь начать, практика или теория?\n"
+                                        f"*не забывай, что ты можешь остановить"
+                                        f" бота в любое время с помощью команды - /sdialog*")
         return 'distribution'
     else:
         await update.message.reply_text('Привет! Как тебя зовут?')
@@ -40,7 +42,9 @@ async def first_response(update, context):
                                         f"Хочешь ли ты попробовать попрактиковаться в решение задач"
                                         f" из огэ или егэ по программированию?\n"
                                         f"Или же изначально ты хочешь прочитать теорию?\n"
-                                        f"Чтобы выбрать, напиши: практика / теория")
+                                        f"Чтобы выбрать, напиши: практика / теория\n"
+                                        f"*также ты можешь остановить бота в любое время с "
+                                        f"помощью команды - /sdialog*")
         return 'distribution'
     else:
         await update.message.reply_text(f"Мне кажется, что ты хочешь меня обмануть!\n"
@@ -51,7 +55,7 @@ async def first_response(update, context):
 
 
 async def distribution_fr(update, context):
-    answer = update.message.text
+    answer = update.message.text.lower()
     if answer == 'да' or answer == 'верно':
         context.user_data['fake_name'] = context.user_data['name']
         context.user_data['name'] = update.message.chat.first_name
@@ -63,7 +67,9 @@ async def distribution_fr(update, context):
                                         f"Хочешь ли ты попробовать попрактиковаться в решение задач"
                                         f" из огэ или егэ по программированию?\n"
                                         f"Или же изначально ты хочешь прочитать теорию?\n"
-                                        f"Чтобы выбрать, напиши: практика / теория")
+                                        f"Чтобы выбрать, напиши: практика / теория\n"
+                                        f"*также ты можешь остановить бота в любое время с "
+                                        f"помощью команды - /sdialog*")
         return 'distribution'
     elif answer == 'нет' or answer == 'не верно':
         await update.message.reply_text(f"Прошу прощения, мы - боты, еще не до конца развиты!\n"
@@ -72,7 +78,9 @@ async def distribution_fr(update, context):
                                         f"Хочешь ли ты попробовать попрактиковаться в решение задач"
                                         f" из огэ или егэ по программированию?\n"
                                         f"Или же изначально ты хочешь прочитать теорию?\n"
-                                        f"Чтобы выбрать, напиши: практика / теория")
+                                        f"Чтобы выбрать, напиши: практика / теория\n"
+                                        f"*также ты можешь остановить бота в любое время с "
+                                        f"помощью команды - /sdialog*")
         return 'distribution'
     else:
         await update.message.reply_text(f"Извини, но я тебя не понимаю.\n"
@@ -81,7 +89,7 @@ async def distribution_fr(update, context):
 
 
 async def distribution(update, context):
-    answer = update.message.text
+    answer = update.message.text.lower()
     if update.message.chat.id not in check_registration_users:
         cur.execute(f"""INSERT INTO statistics(id_users, really_name)
                         VALUES({context.user_data['id_user']}, '{context.user_data['name']}')""")
@@ -121,7 +129,7 @@ async def distribution_oge_or_ege(update, context):
 
 
 async def distribution_oge(update, context):
-    answer = update.message.text
+    answer = update.message.text.lower()
     if answer == '1' or answer == 'лёгкая':
         await update.message.reply_text('Лёгкий уровень сложности:')
         pass
@@ -134,7 +142,7 @@ async def distribution_oge(update, context):
 
 
 async def distribution_ege(update, context):
-    answer = update.message.text
+    answer = update.message.text.lower()
     if answer == '1' or answer == 'лёгкая':
         await update.message.reply_text('Лёгкий уровень сложности:')
         pass
@@ -146,9 +154,10 @@ async def distribution_ege(update, context):
         pass
 
 
-async def skip(update, context):
-    await update.message.reply_text('Какая погода у вас за окном?')
-    return 2
+async def sdialog(update, context):
+    await update.message.reply_text('Надеюсь ты узнал много нового!\n'
+                                    ' До скорых встреч!')
+    return ConversationHandler.END
 
 
 def main():
@@ -165,7 +174,7 @@ def main():
             'distribution_oge_or_ege': [MessageHandler(filters.TEXT & ~filters.COMMAND,
                                                        distribution_oge_or_ege)]
         },
-        fallbacks=[CommandHandler('skip', skip)]
+        fallbacks=[CommandHandler('sdialog', sdialog)]
     )
     application.add_handler(conv_handler)
     application.run_polling()
