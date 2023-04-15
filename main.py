@@ -1,8 +1,12 @@
 import logging
+from PIL import Image, ImageDraw, ImageFont
 from telegram.ext import Application, MessageHandler, filters, CommandHandler, ConversationHandler
 from telegram import ReplyKeyboardMarkup, ReplyKeyboardRemove
 import sqlite3
+import telegram
 import telebot
+import requests
+from io import BytesIO
 
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
                     level=logging.DEBUG)
@@ -13,6 +17,7 @@ cur = con.cursor()
 check_registration_users = []
 
 bot = telebot.TeleBot('6036045502:AAEN6Wb7h18Kfle3YDfropM7ZqIawZhH10c')
+bot_t = telegram.Bot(token='6036045502:AAEN6Wb7h18Kfle3YDfropM7ZqIawZhH10c')
 
 
 async def start(update, context):
@@ -183,6 +188,59 @@ async def distribution_ege(update, context):
         bot.send_photo(update.message.chat.id, photo=open('images/test_img.png', 'rb'),
                        caption='...answer...')
 
+'''    user_photo = await telegram.Bot(token='6036045502:AAEN6Wb7h18Kfle3YDfropM7ZqIawZhH10c'). \
+        getUserProfilePhotos(user_id=user_id)
+    user_photo = user_photo.photos[0][-1] '''
+
+
+async def photo_u(update, context):
+    user_id = update.message.from_user.id
+
+    user_photo = await telegram.Bot(token='6036045502:AAEN6Wb7h18Kfle3YDfropM7ZqIawZhH10c'). \
+        getUserProfilePhotos(user_id=user_id)
+    user_photo = user_photo.photos[0][-1].file_id
+    await update.message.reply_photo(user_photo, caption=user_photo)
+
+
+async def create_profile_user(update, context):
+    user_id = update.message.from_user.id
+
+    user_photo = await telegram.Bot(token='6036045502:AAEN6Wb7h18Kfle3YDfropM7ZqIawZhH10c'). \
+        getUserProfilePhotos(user_id=user_id)
+    print(user_photo)
+    user_photo = user_photo.photos[0][-1].file_id
+    print(user_photo)
+    with Image.open('images/temp.jpg') as im:
+
+        new_im = Image.new('RGB', (500, 500), (255, 255, 255))
+        # draw = ImageDraw.Draw(new_im)
+        # font = ImageFont("arial.ttf", 25)
+        # draw.text((0, 250), f'{user_first_name}', font=font)
+        new_im.paste(im, (0, 0))
+        user_photo_url = await bot_t.get_file(user_photo)
+        print(user_photo_url)
+        user_photo_url = user_photo_url.file_path
+        print(user_photo_url)
+        response = requests.get(user_photo_url)
+        img = Image.open(BytesIO(response.content))
+        img = img.resize((200, 200))
+        new_im.paste(img, (0, 0))
+
+        # Сохраняем картинку профиля во временный файл
+        new_im.save('profile.jpg')
+        await update.message.reply_text('fqfq2w')
+
+
+async def view_profile(update, context):
+
+    user_id = update.message.from_user.id
+
+    image_file = open('profile.jpg', 'rb')
+    bot.send_photo(chat_id=update.message.chat_id,
+                   photo=image_file,
+                   caption=f"Имя: Никита\nID: {user_id}\n")
+    image_file.close()
+
 
 async def sdialog(update, context):
     reply_keyboard = [['/start']]
@@ -212,6 +270,9 @@ def main():
         fallbacks=[CommandHandler('sdialog', sdialog)]
     )
     application.add_handler(conv_handler)
+    application.add_handler(CommandHandler('create_profile_user', create_profile_user))
+    application.add_handler(CommandHandler('profile', view_profile))
+    application.add_handler(CommandHandler('photo_u', photo_u))
     application.run_polling()
 
 
