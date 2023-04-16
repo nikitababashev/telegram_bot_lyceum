@@ -1,5 +1,5 @@
 import logging
-from PIL import Image, ImageDraw, ImageFont
+from PIL import Image
 from telegram.ext import Application, MessageHandler, filters, CommandHandler, ConversationHandler
 from telegram import ReplyKeyboardMarkup, ReplyKeyboardRemove
 import sqlite3
@@ -7,6 +7,7 @@ import telegram
 import telebot
 import requests
 from io import BytesIO
+from datetime import datetime
 
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
                     level=logging.DEBUG)
@@ -188,47 +189,39 @@ async def distribution_ege(update, context):
         bot.send_photo(update.message.chat.id, photo=open('images/test_img.png', 'rb'),
                        caption='...answer...')
 
-'''    user_photo = await telegram.Bot(token='6036045502:AAEN6Wb7h18Kfle3YDfropM7ZqIawZhH10c'). \
-        getUserProfilePhotos(user_id=user_id)
-    user_photo = user_photo.photos[0][-1] '''
-
-
-async def photo_u(update, context):
-    user_id = update.message.from_user.id
-
-    user_photo = await telegram.Bot(token='6036045502:AAEN6Wb7h18Kfle3YDfropM7ZqIawZhH10c'). \
-        getUserProfilePhotos(user_id=user_id)
-    user_photo = user_photo.photos[0][-1].file_id
-    await update.message.reply_photo(user_photo, caption=user_photo)
-
 
 async def create_profile_user(update, context):
-    user_id = update.message.from_user.id
+    created_profile = cur.execute(f"""SELECT created_profile FROM statistics
+                            WHERE id_users = {update.message.chat.id}""").fetchall()[0][0]
+    if created_profile == 'no':
+        print('1')
+        user_id = update.message.from_user.id
 
-    user_photo = await telegram.Bot(token='6036045502:AAEN6Wb7h18Kfle3YDfropM7ZqIawZhH10c'). \
-        getUserProfilePhotos(user_id=user_id)
-    print(user_photo)
-    user_photo = user_photo.photos[0][-1].file_id
-    print(user_photo)
-    with Image.open('images/temp.jpg') as im:
+        cur.execute(f"""UPDATE statistics SET created_profile = 'yes' WHERE id_users = {user_id}""")
+        con.commit()
 
-        new_im = Image.new('RGB', (500, 500), (255, 255, 255))
-        # draw = ImageDraw.Draw(new_im)
-        # font = ImageFont("arial.ttf", 25)
-        # draw.text((0, 250), f'{user_first_name}', font=font)
-        new_im.paste(im, (0, 0))
-        user_photo_url = await bot_t.get_file(user_photo)
-        print(user_photo_url)
-        user_photo_url = user_photo_url.file_path
-        print(user_photo_url)
-        response = requests.get(user_photo_url)
-        img = Image.open(BytesIO(response.content))
-        img = img.resize((200, 200))
-        new_im.paste(img, (0, 0))
+        date_created = str(datetime.now()).replace('.', ' ').split()[0:-1]
+        print(date_created)
 
-        # Сохраняем картинку профиля во временный файл
-        new_im.save('profile.jpg')
-        await update.message.reply_text('fqfq2w')
+        user_photo = await telegram.Bot(token='6036045502:AAEN6Wb7h18Kfle3YDfropM7ZqIawZhH10c'). \
+            getUserProfilePhotos(user_id=user_id)
+        user_photo = user_photo.photos[0][-1].file_id
+        with Image.open('images/temp.jpg') as im:
+
+            new_im = Image.new('RGB', (250, 250), (255, 255, 255))
+            new_im.paste(im, (0, 0))
+            user_photo_url = await bot_t.get_file(user_photo)
+            user_photo_url = user_photo_url.file_path
+            response = requests.get(user_photo_url)
+            img = Image.open(BytesIO(response.content))
+            img = img.resize((250, 250))
+            new_im.paste(img, (0, 0))
+
+            new_im.save('profile.jpg')
+        await update.message.reply_text('Ваш профиль создан')
+    elif created_profile == 'yes':
+        await update.message.reply_text('Вы уже создали свой профиль!\n'
+                                        'Чтобы посмотреть его, напишите /profile')
 
 
 async def view_profile(update, context):
@@ -272,7 +265,6 @@ def main():
     application.add_handler(conv_handler)
     application.add_handler(CommandHandler('create_profile_user', create_profile_user))
     application.add_handler(CommandHandler('profile', view_profile))
-    application.add_handler(CommandHandler('photo_u', photo_u))
     application.run_polling()
 
 
