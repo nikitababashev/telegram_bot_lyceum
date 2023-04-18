@@ -249,6 +249,7 @@ async def create_profile_user(update, context):
         await update.message.reply_text('Вы уже создали свой профиль!\n'
                                         'Чтобы посмотреть его, напишите /profile')
 
+
 async def view_profile(update, context):
     created_profile = cur.execute(f"""SELECT created_profile FROM statistics
                             WHERE id_users = {update.message.chat.id}""").fetchall()[0][0]
