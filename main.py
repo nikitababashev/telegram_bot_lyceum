@@ -8,15 +8,16 @@ import telebot
 import requests
 from io import BytesIO
 from datetime import datetime
+from urllib.parse import quote
 
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
                     level=logging.DEBUG)
 
 logger = logging.getLogger(__name__)
-con = sqlite3.connect('user_stat.db')
+con = sqlite3.connect('db/user_stat.db')
 cur = con.cursor()
 check_registration_users = []
-
+API_URL = 'https://api.mymemory.translated.net/get?q={}&langpair=en|ru'
 bot = telebot.TeleBot('6036045502:AAEN6Wb7h18Kfle3YDfropM7ZqIawZhH10c')
 bot_t = telegram.Bot(token='6036045502:AAEN6Wb7h18Kfle3YDfropM7ZqIawZhH10c')
 
@@ -159,15 +160,61 @@ async def distribution(update, context):
                                             reply_markup=markup)
         return 'distribution_oge_or_ege'
     if answer == 'теория':
-
         cur.execute(f"""UPDATE statistics SET count_theory = count_theory + 1
                     WHERE id_users = {update.message.chat.id}""")
         con.commit()
 
+        reply_keyboard = [['перейти к практике'], ['переводчик']]
+        markup = ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=False)
+
         await update.message.reply_text(f"Теория не менее важна, чем практика!\n"
                                         f"Ознакомиться с теорией можешь на нашем сайте:\n"
                                         f"      https://lyceum.yandex.ru/courses/766/groups/5718",
+                                        reply_markup=markup)
+        return 'distribution_after_theory'
+
+
+async def distribution_after_theory(update, context):
+    answer = update.message.text.lower()
+    if answer == 'переводчик':
+        await update.message.reply_text('Чтобы уметь программировать нужно хорошо знать'
+                                        ' английский.\n'
+                                        'Сейчас вы можете прислать мне текст на английском и я'
+                                        ' переведу его на русский, пока что я '
+                                        'не умею переводить с русского на английский.\n'
+                                        'Чтобы закрыть переводчик, введите слово - "закрыть"\n'
+                                        'Напишите текст на английском:',
                                         reply_markup=ReplyKeyboardRemove())
+        return 'translate_text'
+    elif answer == 'перейти к практике':
+
+        cur.execute(f"""UPDATE statistics SET count_practice = count_practice + 1
+                    WHERE id_users = {update.message.chat.id}""")
+        con.commit()
+
+        reply_keyboard = [['ОГЭ', 'ЕГЭ']]
+        markup = ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=False,
+                                     input_field_placeholder="любим гусей!")
+        await update.message.reply_text('Хорошо, вижу, что ты уверен(а) в своих силах!\n'
+                                        'Выбери из какого экзамена ты хочешь порешать задачи.',
+                                        reply_markup=markup)
+        return 'distribution_oge_or_ege'
+
+
+async def translate_text(update, context):
+    text = update.message.text
+    if text == 'закрыть':
+        reply_keyboard = [['практика', 'теория']]
+        markup = ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=False)
+        await update.message.reply_text('Вы закрыли переводчик.\n'
+                                        'Переношу вас в изначальный пункт выбора!',
+                                        reply_markup=markup)
+        return 'distribution'
+    else:
+        url = API_URL.format(quote(text))
+        response = requests.get(url)
+        translation = response.json()['responseData']['translatedText']
+        await update.message.reply_text(translation, reply_markup=ReplyKeyboardRemove())
 
 
 async def distribution_oge_or_ege(update, context):
@@ -280,13 +327,13 @@ async def view_profile(update, context):
             img = Image.open(BytesIO(response.content))
             img = img.resize((250, 250))
             new_im.paste(img, (0, 0))
-            new_im.save('profile.jpg')
+            new_im.save('images/profile.jpg')
 
         all_informations = cur.execute(f"""SELECT id_users, really_name,
                 date_created_profile, favorite_activity
                  FROM statistics WHERE id_users = {update.message.chat.id}""").fetchall()[0]
 
-        image_file = open('profile.jpg', 'rb')
+        image_file = open('images/profile.jpg', 'rb')
         bot.send_photo(chat_id=update.message.chat_id,
                        photo=image_file,
                        caption=f"Имя: {all_informations[1]}\n"
@@ -322,7 +369,10 @@ def main():
             'distribution_oge': [MessageHandler(filters.TEXT & ~filters.COMMAND, distribution_oge)],
             'distribution_ege': [MessageHandler(filters.TEXT & ~filters.COMMAND, distribution_ege)],
             'distribution_oge_or_ege': [MessageHandler(filters.TEXT & ~filters.COMMAND,
-                                                       distribution_oge_or_ege)]
+                                                       distribution_oge_or_ege)],
+            'distribution_after_theory': [MessageHandler(filters.TEXT & ~filters.COMMAND,
+                                                         distribution_after_theory)],
+            'translate_text': [MessageHandler(filters.TEXT & ~filters.COMMAND, translate_text)]
         },
         fallbacks=[CommandHandler('sdialog', sdialog)]
     )
