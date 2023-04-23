@@ -9,6 +9,7 @@ import requests
 from io import BytesIO
 from datetime import datetime
 from urllib.parse import quote
+import random
 
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
                     level=logging.DEBUG)
@@ -20,6 +21,91 @@ check_registration_users = []
 API_URL = 'https://api.mymemory.translated.net/get?q={}&langpair=en|ru'
 bot = telebot.TeleBot('6036045502:AAEN6Wb7h18Kfle3YDfropM7ZqIawZhH10c')
 bot_t = telegram.Bot(token='6036045502:AAEN6Wb7h18Kfle3YDfropM7ZqIawZhH10c')
+questions_oge_eazy = [
+    {"image": "images/oge_eazy/1.jpg",
+     "question": "Было проведено 9 запусков программы,"
+                 " при которых в качестве значений"
+                 " переменных s и t вводились следующие пары чисел:\n"
+                 "(1, 2); (11, 2); (1, 12); (11, 12); "
+                 "(–11, –12); (–11, 12); (–12, 11); (10, 10); (10, 5).\n"
+                 "Сколько было запусков, при которых программа напечатала «YES»?",
+     "answer": "5"},
+    {"image": "images/oge_eazy/2.jpg",
+     "question": "Было проведено 9 запусков программы,"
+                 " при которых в качестве значений"
+                 " переменных s и t вводились следующие пары чисел:\n"
+                 "(1, 13); (14, 2); (1, 12); (11, 12); "
+                 "(–14, –14); (–11, 13); (–4, 11); (2, 9); (8, 6).\n"
+                 "Сколько было запусков, при которых программа напечатала «YES»?",
+     "answer": "3"},
+    {"image": "images/oge_eazy/3.jpg",
+     "question": "Было проведено 9 запусков программы,"
+                 " при которых в качестве значений переменных"
+                 " s и t вводились следующие пары чисел:\n"
+                 "(3, 4); (5, 4); (–2, 1); (5, 6); (7, 8); (–5, 5); (–2, 2); (4, 3); (12, 22).\n"
+                 "Сколько было запусков, при которых программа напечатала «NO»?",
+     "answer": "4"}
+]
+questions_oge_medium = [
+    {"image": "images/oge_medium/1.jpg",
+     "question": "Было проведено 9 запусков программы,"
+                 " при которых в качестве значений переменных "
+                 "s и k вводились следующие пары чисел:\n"
+                 "(1, 1); (8, 4); (14, 10); (20, 1); (7, 3); (10, 5); (10, 2); (4, 1); (1, 0).\n"
+                 "Сколько было запусков, при которых программа напечатала «ДА»?",
+     "answer": "4"},
+    {"image": "images/oge_medium/2.jpg",
+     "question": "Было проведено 9 запусков программы, "
+                 "при которых в качестве значений переменных "
+                 "s и k вводились следующие пары чисел:\n"
+                 "(1, 2); (8, 4); (6, −12); (−5, −5); "
+                 "(3, 11); (—10, 12); (—10, −2); (4, 1); (2, 5).\n"
+                 "Сколько было запусков, при которых программа напечатала «ДА»?",
+     "answer": "4"},
+    {"image": "images/oge_medium/3.jpg",
+     "question": "Было проведено 9 запусков программы,"
+                 " при которых в качестве значений переменных"
+                 " s и t вводились следующие пары чисел:\n"
+                 "(–2, 3); (2, 5); (0, 3); (5, –3); (5, 4); (11, 4); (8, –6); (7, 3); (9, 1).\n"
+                 "Сколько было запусков, при которых программа напечатала «YES»?",
+     "answer": "6"}
+]
+questions_oge_hard = [
+    {"image": "images/oge_hard/1.jpg",
+     "question": "Какой знак нужно поставить, чтобы получился верный ответ?\n"
+                 "Входные данные:\n"
+                 "      3\n"
+                 "      12\n"
+                 "      25\n"
+                 "      6\n"
+                 "Выходные данные:\n"
+                 "      18",
+     "answer": "%"},
+    {"image": "images/oge_hard/2.jpg",
+     "question": "Какой оператор нужно поставить, чтобы получился верный ответ?\n"
+                 "Входные данные:\n"
+                 "      1\n"
+                 "      20\n"
+                 "      21\n"
+                 "      30\n"
+                 "      0\n"
+                 "Выходные данные:\n"
+                 "      4\n"
+                 "      50\n",
+     "answer": "and"},
+    {"image": "images/oge_hard/3.jpg",
+     "question": "Какое значение нужно поставить, чтобы получился верный ответ?\n"
+                 "Входные данные:\n"
+                 "      18\n"
+                 "      21\n"
+                 "      28\n"
+                 "      18\n"
+                 "      0\n"
+                 "Выходные данные:\n"
+                 "      36",
+     "answer": "8"}
+]
+questions_used = []
 
 
 async def start(update, context):
@@ -146,7 +232,7 @@ async def distribution(update, context):
                     WHERE id_users = {update.message.chat.id}""")
         con.commit()
 
-        reply_keyboard = [['ОГЭ', 'ЕГЭ']]
+        reply_keyboard = [['ОГЭ', 'ЕГЭ'], ['практика/теория']]
         markup = ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=False,
                                      input_field_placeholder="любим гусей!")
         if update.message.chat.id in check_registration_users:
@@ -219,41 +305,212 @@ async def translate_text(update, context):
 
 async def distribution_oge_or_ege(update, context):
     answer = update.message.text
-    reply_keyboard = [['лёгкая', 'средняя', 'сложная']]
-    markup = ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=False)
-    if answer == 'ОГЭ':
-        await update.message.reply_text('Вы выбрали - ОГЭ!\n'
-                                        'Выберите сложность:\n'
-                                        '1) лёгкая\n'
-                                        '2) средняя\n'
-                                        '3) сложная', reply_markup=markup)
-        return 'distribution_oge'
-    elif answer == 'ЕГЭ':
-        await update.message.reply_text('Вы выбрали - ОГЭ!\n'
-                                        'Выберите сложность:\n'
-                                        '1) лёгкая\n'
-                                        '2) средняя\n'
-                                        '3) сложная', reply_markup=markup)
-        return 'distribution_ege'
+    if answer == 'практика/теория':
+        reply_keyboard = [['практика', 'теория']]
+        markup = ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=False)
+        await update.message.reply_text('Выберите свой путь!', reply_markup=markup)
+        return 'distribution'
+    else:
+        await update.message.reply_text('За каждый верный ответ будут начисляться баллы!\n'
+                                        'ОГЭ:\n'
+                                        '    лёгкий уровень сложности - 1 балл\n'
+                                        '    средний уровень сложности - 2 балла\n'
+                                        '    сложный уровень сложности - 3 балла\n'
+                                        'ЕГЭ:\n'
+                                        '    лёгкий уровень сложности - 4 балла\n'
+                                        '    средний уровень сложности - 5 баллов\n'
+                                        '    сложный уровень сложности - 6 баллов\n'
+                                        'За каждый неверный ответ -1 балл!\n'
+                                        'Баллы будут в вашем профиле - /profile')
+        reply_keyboard = [['лёгкая', 'средняя', 'сложная'], ['практика/теория']]
+        markup = ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=False)
+        if answer == 'ОГЭ':
+            await update.message.reply_text('Вы выбрали - ОГЭ!\n'
+                                            'Выберите сложность:\n'
+                                            '1) лёгкая\n'
+                                            '2) средняя\n'
+                                            '3) сложная', reply_markup=markup)
+            return 'distribution_oge'
+        elif answer == 'ЕГЭ':
+            await update.message.reply_text('Вы выбрали - ОГЭ!\n'
+                                            'Выберите сложность:\n'
+                                            '1) лёгкая\n'
+                                            '2) средняя\n'
+                                            '3) сложная', reply_markup=markup)
+            return 'distribution_ege'
 
 
 async def distribution_oge(update, context):
+    global questions_used
     answer = update.message.text.lower()
+    reply_keyboard = [['практика/теория']]
+    markup = ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=False,
+                                 input_field_placeholder="любим гусей!")
+    questions_used = []
     if answer == '1' or answer == 'лёгкая':
+        question = random.choice(questions_oge_eazy)
+        img = question['image']
+        quest = question['question']
         await update.message.reply_text('Лёгкий уровень сложности:',
-                                        reply_markup=ReplyKeyboardRemove())
-        bot.send_photo(update.message.chat.id, photo=open('images/test_img.png', 'rb'),
-                       caption='...answer...')
+                                        reply_markup=markup)
+        bot.send_photo(update.message.chat.id, photo=open(img, 'rb'),
+                       caption=quest)
+        questions_used.append(question)
+        return 'check_answer'
     if answer == '2' or answer == 'средняя':
+        question = random.choice(questions_oge_medium)
+        img = question['image']
+        quest = question['question']
         await update.message.reply_text('Средний уровень сложности:',
-                                        reply_markup=ReplyKeyboardRemove())
-        bot.send_photo(update.message.chat.id, photo=open('images/test_img.png', 'rb'),
-                       caption='...answer...')
+                                        reply_markup=markup)
+        bot.send_photo(update.message.chat.id, photo=open(img, 'rb'),
+                       caption=quest)
+        questions_used.append(question)
+        return 'check_answer'
     if answer == '3' or answer == 'сложная':
+        question = random.choice(questions_oge_hard)
+        img = question['image']
+        quest = question['question']
         await update.message.reply_text('Сложный уровень сложности:',
-                                        reply_markup=ReplyKeyboardRemove())
-        bot.send_photo(update.message.chat.id, photo=open('images/test_img.png', 'rb'),
-                       caption='...answer...')
+                                        reply_markup=markup)
+        bot.send_photo(update.message.chat.id, photo=open(img, 'rb'),
+                       caption=quest)
+        questions_used.append(question)
+        return 'check_answer'
+    if answer == 'практика/теория':
+        reply_keyboard = [['практика', 'теория']]
+        markup = ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=False)
+        await update.message.reply_text('Выберите свой путь!', reply_markup=markup)
+        return 'distribution'
+
+
+async def check_answer(update, context):
+    reply_keyboard = [['практика/теория']]
+    markup = ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=False,
+                                 input_field_placeholder="любим гусей!")
+    answer = update.message.text
+    if answer == questions_used[-1]['answer']:
+        if questions_used[-1] in questions_oge_eazy:
+
+            cur.execute(f"""UPDATE statistics SET scores = scores + 1
+                        WHERE id_users = {update.message.chat.id}""")
+            con.commit()
+
+            if len(questions_used) < 3:
+                await update.message.reply_text('Правильно!\n'
+                                                'Следующий тест:')
+                while True:
+                    question = random.choice(questions_oge_eazy)
+                    if question not in questions_used:
+                        break
+                img = question['image']
+                quest = question['question']
+                await update.message.reply_text('Лёгкий уровень сложности:',
+                                                reply_markup=markup)
+                bot.send_photo(update.message.chat.id, photo=open(img, 'rb'),
+                               caption=quest)
+                questions_used.append(question)
+                return 'check_answer'
+
+            else:
+                await update.message.reply_text('Правильно!\n'
+                                                'Вы прошли все тесты лёгкой сложности.\n'
+                                                'Переношу вас на средний уровень сложности!')
+                question = random.choice(questions_oge_medium)
+                img = question['image']
+                quest = question['question']
+                await update.message.reply_text('Средний уровень сложности:',
+                                                reply_markup=markup)
+                bot.send_photo(update.message.chat.id, photo=open(img, 'rb'),
+                               caption=quest)
+                questions_used.clear()
+                questions_used.append(question)
+                return 'check_answer'
+
+        if questions_used[-1] in questions_oge_medium:
+
+            cur.execute(f"""UPDATE statistics SET scores = scores + 2
+                        WHERE id_users = {update.message.chat.id}""")
+            con.commit()
+
+            if len(questions_used) < 3:
+                await update.message.reply_text('Правильно!\n'
+                                                'Следующий тест:')
+                while True:
+                    question = random.choice(questions_oge_medium)
+                    if question not in questions_used:
+                        break
+                img = question['image']
+                quest = question['question']
+                await update.message.reply_text('Средний уровень сложности:',
+                                                reply_markup=markup)
+                bot.send_photo(update.message.chat.id, photo=open(img, 'rb'),
+                               caption=quest)
+                questions_used.append(question)
+                return 'check_answer'
+
+            else:
+                await update.message.reply_text('Правильно!\n'
+                                                'Вы прошли все тесты средней сложности.\n'
+                                                'Переношу вас на сложный уровень сложности!')
+                question = random.choice(questions_oge_hard)
+                img = question['image']
+                quest = question['question']
+                await update.message.reply_text('Сложный уровень сложности:',
+                                                reply_markup=markup)
+                bot.send_photo(update.message.chat.id, photo=open(img, 'rb'),
+                               caption=quest)
+                questions_used.clear()
+                questions_used.append(question)
+                return 'check_answer'
+
+        if questions_used[-1] in questions_oge_hard:
+
+            cur.execute(f"""UPDATE statistics SET scores = scores + 3
+                        WHERE id_users = {update.message.chat.id}""")
+            con.commit()
+
+            if len(questions_used) < 3:
+                await update.message.reply_text('Правильно!\n'
+                                                'Следующий тест:')
+                while True:
+                    question = random.choice(questions_oge_hard)
+                    if question not in questions_used:
+                        break
+                img = question['image']
+                quest = question['question']
+                await update.message.reply_text('Сложный уровень сложности:',
+                                                reply_markup=markup)
+                bot.send_photo(update.message.chat.id, photo=open(img, 'rb'),
+                               caption=quest)
+                questions_used.append(question)
+                return 'check_answer'
+
+            else:
+                await update.message.reply_text('Правильно!\n'
+                                                'Вы прошли все возможные тесты в разделе "ОГЭ"\n'
+                                                'Вы можете вернуться, чтобы закрепить'
+                                                ' материал.')
+                reply_keyboard = [['практика', 'теория']]
+                markup = ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=False)
+                await update.message.reply_text('Куда вы хотите направиться?', reply_markup=markup)
+                return 'distribution'
+
+    elif answer == 'практика/теория':
+        reply_keyboard = [['практика', 'теория']]
+        markup = ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=False)
+        await update.message.reply_text('Выберите свой путь!', reply_markup=markup)
+        return 'distribution'
+
+    else:
+
+        cur.execute(f"""UPDATE statistics SET scores = scores - 1
+                    WHERE id_users = {update.message.chat.id}""")
+        con.commit()
+
+        await update.message.reply_text('Вы ответили неверно!\n'
+                                        'Попробуйте еще раз!', reply_markup=markup)
+        return 'check_answer'
 
 
 async def distribution_ege(update, context):
@@ -333,13 +590,24 @@ async def view_profile(update, context):
                 date_created_profile, favorite_activity
                  FROM statistics WHERE id_users = {update.message.chat.id}""").fetchall()[0]
 
+        scores_all = cur.execute(f"""SELECT scores FROM statistics""").fetchall()
+        scores_user = cur.execute(f"""SELECT scores FROM statistics
+                                    WHERE id_users = {update.message.chat.id}""").fetchall()[0][0]
+        p_scores = []
+        for x in scores_all:
+            p_scores.append(x[0])
+        p_scores = sorted(p_scores, reverse=True)
+        place_in_the_rating = p_scores.index(scores_user) + 1
+
         image_file = open('images/profile.jpg', 'rb')
         bot.send_photo(chat_id=update.message.chat_id,
                        photo=image_file,
                        caption=f"Имя: {all_informations[1]}\n"
                                f"ID: {all_informations[0]}\n"
                                f"Дата создания: {all_informations[2]}\n"
-                               f"Любимая деятельность: {all_informations[3]}")
+                               f"Любимая деятельность: {all_informations[3]}\n"
+                               f"Баллы: {scores_user}\n"
+                               f"Место среди других участников: {place_in_the_rating}")
         image_file.close()
     elif created_profile == 'no':
         await update.message.reply_text('Вы еще не создали профиль!\n'
@@ -367,6 +635,7 @@ def main():
             'distribution': [MessageHandler(filters.TEXT & ~filters.COMMAND, distribution)],
             'distribution_fr': [MessageHandler(filters.TEXT & ~filters.COMMAND, distribution_fr)],
             'distribution_oge': [MessageHandler(filters.TEXT & ~filters.COMMAND, distribution_oge)],
+            'check_answer': [MessageHandler(filters.TEXT & ~filters.COMMAND, check_answer)],
             'distribution_ege': [MessageHandler(filters.TEXT & ~filters.COMMAND, distribution_ege)],
             'distribution_oge_or_ege': [MessageHandler(filters.TEXT & ~filters.COMMAND,
                                                        distribution_oge_or_ege)],
