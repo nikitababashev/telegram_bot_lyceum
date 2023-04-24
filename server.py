@@ -804,6 +804,11 @@ async def view_profile(update, context):
                             WHERE id_users = {update.message.chat.id}""").fetchall()[0][0]
 
     if created_profile == 'yes':
+        username_tg = update.message.from_user.username
+        cur.execute(f"""UPDATE statistics 
+                        SET username_tg = '{username_tg}'
+                        WHERE id_users = {update.message.chat.id}""")
+
         count_practice = cur.execute(f"""SELECT count_practice FROM statistics
                             WHERE id_users = {update.message.chat.id}""").fetchall()[0][0]
         count_theory = cur.execute(f"""SELECT count_theory FROM statistics
@@ -852,6 +857,7 @@ async def view_profile(update, context):
         bot.send_photo(chat_id=update.message.chat_id,
                        photo=image_file,
                        caption=f"Имя: {all_informations[1]}\n"
+                               f"username: {username_tg}\n"
                                f"ID: {all_informations[0]}\n"
                                f"Дата создания: {all_informations[2]}\n"
                                f"Любимая деятельность: {all_informations[3]}\n"
