@@ -2,3 +2,9 @@ Pillow
 telebot
 requests
 telegram
+logging
+sqlite3
+io
+datetime
+urllib.parse
+random
