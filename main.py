@@ -330,7 +330,7 @@ async def distribution(update, context):
 
         await update.message.reply_text(f"Теория не менее важна, чем практика!\n"
                                         f"Ознакомиться с теорией можешь на нашем сайте:\n"
-                                        f"      https://lyceum.yandex.ru/courses/766/groups/5718",
+                                        f"      ~на доработке~",
                                         reply_markup=markup)
         return 'distribution_after_theory'
 
@@ -819,17 +819,19 @@ async def view_profile(update, context):
 
         user_photo = await telegram.Bot(token='6036045502:AAEN6Wb7h18Kfle3YDfropM7ZqIawZhH10c'). \
             getUserProfilePhotos(user_id=update.message.chat.id)
-        user_photo = user_photo.photos[0][-1].file_id
-        with Image.open('images/temp.jpg') as im:
-            new_im = Image.new('RGB', (250, 250), (255, 255, 255))
-            new_im.paste(im, (0, 0))
-            user_photo_url = await bot_t.get_file(user_photo)
-            user_photo_url = user_photo_url.file_path
-            response = requests.get(user_photo_url)
-            img = Image.open(BytesIO(response.content))
-            img = img.resize((250, 250))
-            new_im.paste(img, (0, 0))
-            new_im.save('images/profile.jpg')
+        count_photo = user_photo.total_count
+        if count_photo != 0:
+            user_photo = user_photo.photos[0][-1].file_id
+            with Image.open('images/temp.jpg') as im:
+                new_im = Image.new('RGB', (250, 250), (255, 255, 255))
+                new_im.paste(im, (0, 0))
+                user_photo_url = await bot_t.get_file(user_photo)
+                user_photo_url = user_photo_url.file_path
+                response = requests.get(user_photo_url)
+                img = Image.open(BytesIO(response.content))
+                img = img.resize((250, 250))
+                new_im.paste(img, (0, 0))
+                new_im.save('images/profile.jpg')
 
         all_informations = cur.execute(f"""SELECT id_users, really_name,
                 date_created_profile, favorite_activity
@@ -843,8 +845,10 @@ async def view_profile(update, context):
             p_scores.append(x[0])
         p_scores = sorted(p_scores, reverse=True)
         place_in_the_rating = p_scores.index(scores_user) + 1
-
-        image_file = open('images/profile.jpg', 'rb')
+        if count_photo != 0:
+            image_file = open('images/profile.jpg', 'rb')
+        else:
+            image_file = open('images/temp.jpg', 'rb')
         bot.send_photo(chat_id=update.message.chat_id,
                        photo=image_file,
                        caption=f"Имя: {all_informations[1]}\n"
