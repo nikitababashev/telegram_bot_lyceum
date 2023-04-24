@@ -105,6 +105,72 @@ questions_oge_hard = [
                  "      36",
      "answer": "8"}
 ]
+
+questions_ege_eazy = [
+    {"image": "images/ege_eazy/1.jpg",
+     "question": "Какое число нужно ввести в автомат, чтобы в результате получилось 111?",
+     "answer": "72"},
+    {"image": "images/ege_eazy/2.jpg",
+     "question": "Какое наибольшее число, не превышающее"
+                 " 100, после обработки автоматом даёт результат 13?",
+     "answer": "88"},
+    {"image": "images/ege_eazy/3.jpg",
+     "question": "При каком наименьшем числе N в результате"
+                 " работы алгоритма получится R>150? "
+                 "В ответе запишите это число в десятичной системе счисления.",
+     "answer": "38"}
+]
+questions_ege_medium = [
+    {"image": "images/ege_medium/1.jpg",
+     "question": "Для какого наименьшего неотрицательного целого числа А формула"
+                 "тождественно истинна \n(т.е. принимает значение 1 "
+                 "при любом неотрицательном целом значении переменной x)?",
+     "answer": "0"},
+    {"image": "images/ege_medium/2.jpg",
+     "question": "На числовой прямой даны три отрезка: P = [10,15], Q = [10,20] и R=[5,15].\n"
+                 "Какова наименьшая возможная длина интервала A, "
+                 "что формулы тождественно равны, то есть принимают "
+                 "равные значения при любом значении переменной"
+                 " х (за исключением, возможно, конечного числа точек).",
+     "answer": "5"},
+    {"image": "images/ege_medium/3.jpg",
+     "question": "Для какого наименьшего целого неотрицательного числа A выражение "
+                 "тождественно истинно при любых целых неотрицательных m и n?",
+     "answer": "9"}
+]
+questions_ege_hard = [
+    {"image": "images/ege_hard/1.jpg",
+     "question": "Первая из этих команд увеличивает число x на"
+                 " экране на 1, вторая переводит число x в число 2x+1.\n"
+                 "Например, вторая команда переводит число 10в число 21.\n"
+                 "Программа для исполнителя НечетМ – это последовательность команд.\n"
+                 "Сколько существует таких программ, которые"
+                 " число 1 преобразуют в число 27,"
+                 " причём траектория вычислений не содержит число 26?\n"
+                 "Траектория вычислений программы – это последовательность "
+                 "результатов выполнения всех команд программы.\n"
+                 "Например, для программы 121 при исходном числе "
+                 "7 траектория будет состоять из чисел 8, 17, 18.",
+     "answer": '13'},
+    {"image": "images/ege_hard/2.jpg",
+     "question": "Первая из них увеличивает число"
+                 " на экране на 1, вторая увеличивает "
+                 "на 1 старшую (левую) цифру числа, "
+                 "например число 23 с помощью такой команды превратится в число 33.\n"
+                 "Если старшая цифра числа равна 9, то вторая "
+                 "команда оставляет это число неизменным.\n"
+                 "Программа для Прибавителя — это последовательность команд.\n"
+                 "Сколько есть программ, которые число 35 преобразуют в число 57?",
+     "answer": "20"},
+    {"image": "images/ege_hard/3.jpg",
+     "question": "Первая команда увеличивает число на экране на 1, вторая увеличивает"
+                 " это число на 3, третья прибавляет к числу на экране число,"
+                 " меньшее на 1 (к числу 3 прибавляется 2, к числу 11 прибавляется 10 и т.д.).\n"
+                 "Программа для исполнителя А22 – это последовательность команд.\n"
+                 "Сколько существует программ, которые число 2 преобразуют в число 10?",
+     "answer": "39"}
+]
+
 questions_used = []
 
 
@@ -228,9 +294,13 @@ async def distribution(update, context):
 
     if answer == 'практика':
 
-        cur.execute(f"""UPDATE statistics SET count_practice = count_practice + 1
-                    WHERE id_users = {update.message.chat.id}""")
-        con.commit()
+        check_registration_users_db = cur.execute("""SELECT id_users FROM statistics""").fetchall()
+        for id_user_db in check_registration_users_db:
+            check_registration_users.append(id_user_db[0])
+        if update.message.chat.id in check_registration_users:
+            cur.execute(f"""UPDATE statistics SET count_practice = count_practice + 1
+                        WHERE id_users = {update.message.chat.id}""")
+            con.commit()
 
         reply_keyboard = [['ОГЭ', 'ЕГЭ'], ['практика/теория']]
         markup = ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=False,
@@ -246,9 +316,14 @@ async def distribution(update, context):
                                             reply_markup=markup)
         return 'distribution_oge_or_ege'
     if answer == 'теория':
-        cur.execute(f"""UPDATE statistics SET count_theory = count_theory + 1
-                    WHERE id_users = {update.message.chat.id}""")
-        con.commit()
+
+        check_registration_users_db = cur.execute("""SELECT id_users FROM statistics""").fetchall()
+        for id_user_db in check_registration_users_db:
+            check_registration_users.append(id_user_db[0])
+        if update.message.chat.id in check_registration_users:
+            cur.execute(f"""UPDATE statistics SET count_theory = count_theory + 1
+                        WHERE id_users = {update.message.chat.id}""")
+            con.commit()
 
         reply_keyboard = [['перейти к практике'], ['переводчик']]
         markup = ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=False)
@@ -274,9 +349,13 @@ async def distribution_after_theory(update, context):
         return 'translate_text'
     elif answer == 'перейти к практике':
 
-        cur.execute(f"""UPDATE statistics SET count_practice = count_practice + 1
-                    WHERE id_users = {update.message.chat.id}""")
-        con.commit()
+        check_registration_users_db = cur.execute("""SELECT id_users FROM statistics""").fetchall()
+        for id_user_db in check_registration_users_db:
+            check_registration_users.append(id_user_db[0])
+        if update.message.chat.id in check_registration_users:
+            cur.execute(f"""UPDATE statistics SET count_practice = count_practice + 1
+                        WHERE id_users = {update.message.chat.id}""")
+            con.commit()
 
         reply_keyboard = [['ОГЭ', 'ЕГЭ']]
         markup = ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=False,
@@ -392,9 +471,14 @@ async def check_answer(update, context):
     if answer == questions_used[-1]['answer']:
         if questions_used[-1] in questions_oge_eazy:
 
-            cur.execute(f"""UPDATE statistics SET scores = scores + 1
-                        WHERE id_users = {update.message.chat.id}""")
-            con.commit()
+            check_registration_users_db = cur.execute(
+                """SELECT id_users FROM statistics""").fetchall()
+            for id_user_db in check_registration_users_db:
+                check_registration_users.append(id_user_db[0])
+            if update.message.chat.id in check_registration_users:
+                cur.execute(f"""UPDATE statistics SET scores = scores + 1
+                            WHERE id_users = {update.message.chat.id}""")
+                con.commit()
 
             if len(questions_used) < 3:
                 await update.message.reply_text('Правильно!\n'
@@ -429,9 +513,14 @@ async def check_answer(update, context):
 
         if questions_used[-1] in questions_oge_medium:
 
-            cur.execute(f"""UPDATE statistics SET scores = scores + 2
-                        WHERE id_users = {update.message.chat.id}""")
-            con.commit()
+            check_registration_users_db = cur.execute(
+                """SELECT id_users FROM statistics""").fetchall()
+            for id_user_db in check_registration_users_db:
+                check_registration_users.append(id_user_db[0])
+            if update.message.chat.id in check_registration_users:
+                cur.execute(f"""UPDATE statistics SET scores = scores + 2
+                            WHERE id_users = {update.message.chat.id}""")
+                con.commit()
 
             if len(questions_used) < 3:
                 await update.message.reply_text('Правильно!\n'
@@ -466,9 +555,14 @@ async def check_answer(update, context):
 
         if questions_used[-1] in questions_oge_hard:
 
-            cur.execute(f"""UPDATE statistics SET scores = scores + 3
-                        WHERE id_users = {update.message.chat.id}""")
-            con.commit()
+            check_registration_users_db = cur.execute(
+                """SELECT id_users FROM statistics""").fetchall()
+            for id_user_db in check_registration_users_db:
+                check_registration_users.append(id_user_db[0])
+            if update.message.chat.id in check_registration_users:
+                cur.execute(f"""UPDATE statistics SET scores = scores + 3
+                            WHERE id_users = {update.message.chat.id}""")
+                con.commit()
 
             if len(questions_used) < 3:
                 await update.message.reply_text('Правильно!\n'
@@ -496,6 +590,128 @@ async def check_answer(update, context):
                 await update.message.reply_text('Куда вы хотите направиться?', reply_markup=markup)
                 return 'distribution'
 
+        if questions_used[-1] in questions_ege_eazy:
+
+            check_registration_users_db = cur.execute(
+                """SELECT id_users FROM statistics""").fetchall()
+            for id_user_db in check_registration_users_db:
+                check_registration_users.append(id_user_db[0])
+            if update.message.chat.id in check_registration_users:
+                cur.execute(f"""UPDATE statistics SET scores = scores + 4
+                            WHERE id_users = {update.message.chat.id}""")
+                con.commit()
+
+            if len(questions_used) < 3:
+                await update.message.reply_text('Правильно!\n'
+                                                'Следующий тест:')
+                while True:
+                    question = random.choice(questions_ege_eazy)
+                    if question not in questions_used:
+                        break
+                img = question['image']
+                quest = question['question']
+                await update.message.reply_text('Лёгкий уровень сложности:',
+                                                reply_markup=markup)
+                bot.send_photo(update.message.chat.id, photo=open(img, 'rb'),
+                               caption=quest)
+                questions_used.append(question)
+                return 'check_answer'
+
+            else:
+                await update.message.reply_text('Правильно!\n'
+                                                'Вы прошли все тесты лёгкой сложности.\n'
+                                                'Переношу вас на средний уровень сложности!')
+                question = random.choice(questions_ege_medium)
+                img = question['image']
+                quest = question['question']
+                await update.message.reply_text('Средний уровень сложности:',
+                                                reply_markup=markup)
+                bot.send_photo(update.message.chat.id, photo=open(img, 'rb'),
+                               caption=quest)
+                questions_used.clear()
+                questions_used.append(question)
+                return 'check_answer'
+
+        if questions_used[-1] in questions_ege_medium:
+
+            check_registration_users_db = cur.execute(
+                """SELECT id_users FROM statistics""").fetchall()
+            for id_user_db in check_registration_users_db:
+                check_registration_users.append(id_user_db[0])
+            if update.message.chat.id in check_registration_users:
+                cur.execute(f"""UPDATE statistics SET scores = scores + 5
+                            WHERE id_users = {update.message.chat.id}""")
+                con.commit()
+
+            if len(questions_used) < 3:
+                await update.message.reply_text('Правильно!\n'
+                                                'Следующий тест:')
+                while True:
+                    question = random.choice(questions_ege_medium)
+                    if question not in questions_used:
+                        break
+                img = question['image']
+                quest = question['question']
+                await update.message.reply_text('Средний уровень сложности:',
+                                                reply_markup=markup)
+                bot.send_photo(update.message.chat.id, photo=open(img, 'rb'),
+                               caption=quest)
+                questions_used.append(question)
+                return 'check_answer'
+
+            else:
+                await update.message.reply_text('Правильно!\n'
+                                                'Вы прошли все тесты средней сложности.\n'
+                                                'Переношу вас на сложный уровень сложности!')
+                question = random.choice(questions_ege_hard)
+                img = question['image']
+                quest = question['question']
+                await update.message.reply_text('Сложный уровень сложности:',
+                                                reply_markup=markup)
+                bot.send_photo(update.message.chat.id, photo=open(img, 'rb'),
+                               caption=quest)
+                questions_used.clear()
+                questions_used.append(question)
+                return 'check_answer'
+
+        if questions_used[-1] in questions_ege_hard:
+
+            check_registration_users_db = cur.execute(
+                """SELECT id_users FROM statistics""").fetchall()
+            for id_user_db in check_registration_users_db:
+                check_registration_users.append(id_user_db[0])
+            if update.message.chat.id in check_registration_users:
+                cur.execute(f"""UPDATE statistics SET scores = scores + 6
+                            WHERE id_users = {update.message.chat.id}""")
+                con.commit()
+
+            if len(questions_used) < 3:
+                await update.message.reply_text('Правильно!\n'
+                                                'Следующий тест:')
+                while True:
+                    question = random.choice(questions_ege_hard)
+                    if question not in questions_used:
+                        break
+                img = question['image']
+                quest = question['question']
+                await update.message.reply_text('Сложный уровень сложности:',
+                                                reply_markup=markup)
+                bot.send_photo(update.message.chat.id, photo=open(img, 'rb'),
+                               caption=quest)
+                questions_used.append(question)
+                return 'check_answer'
+
+            else:
+                await update.message.reply_text('Правильно!\n'
+                                                'Вы прошли все возможные тесты в разделе "ЕГЭ"\n'
+                                                'Вы можете вернуться, чтобы закрепить'
+                                                ' материал.'
+                                                'Через /profile вы можете посмотреть свой прогресс')
+                reply_keyboard = [['практика', 'теория']]
+                markup = ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=False)
+                await update.message.reply_text('Куда вы хотите направиться?', reply_markup=markup)
+                return 'distribution'
+
     elif answer == 'практика/теория':
         reply_keyboard = [['практика', 'теория']]
         markup = ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=False)
@@ -504,9 +720,13 @@ async def check_answer(update, context):
 
     else:
 
-        cur.execute(f"""UPDATE statistics SET scores = scores - 1
-                    WHERE id_users = {update.message.chat.id}""")
-        con.commit()
+        check_registration_users_db = cur.execute("""SELECT id_users FROM statistics""").fetchall()
+        for id_user_db in check_registration_users_db:
+            check_registration_users.append(id_user_db[0])
+        if update.message.chat.id in check_registration_users:
+            cur.execute(f"""UPDATE statistics SET scores = scores - 1
+                        WHERE id_users = {update.message.chat.id}""")
+            con.commit()
 
         await update.message.reply_text('Вы ответили неверно!\n'
                                         'Попробуйте еще раз!', reply_markup=markup)
@@ -514,22 +734,47 @@ async def check_answer(update, context):
 
 
 async def distribution_ege(update, context):
+    global questions_used
     answer = update.message.text.lower()
+    reply_keyboard = [['практика/теория']]
+    markup = ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=False,
+                                 input_field_placeholder="любим гусей!")
+    questions_used = []
     if answer == '1' or answer == 'лёгкая':
+        question = random.choice(questions_ege_eazy)
+        img = question['image']
+        quest = question['question']
         await update.message.reply_text('Лёгкий уровень сложности:',
-                                        reply_markup=ReplyKeyboardRemove())
-        bot.send_photo(update.message.chat.id, photo=open('images/test_img.png', 'rb'),
-                       caption='...answer...')
+                                        reply_markup=markup)
+        bot.send_photo(update.message.chat.id, photo=open(img, 'rb'),
+                       caption=quest)
+        questions_used.append(question)
+        return 'check_answer'
     if answer == '2' or answer == 'средняя':
+        question = random.choice(questions_ege_medium)
+        img = question['image']
+        quest = question['question']
         await update.message.reply_text('Средний уровень сложности:',
-                                        reply_markup=ReplyKeyboardRemove())
-        bot.send_photo(update.message.chat.id, photo=open('images/test_img.png', 'rb'),
-                       caption='...answer...')
+                                        reply_markup=markup)
+        bot.send_photo(update.message.chat.id, photo=open(img, 'rb'),
+                       caption=quest)
+        questions_used.append(question)
+        return 'check_answer'
     if answer == '3' or answer == 'сложная':
+        question = random.choice(questions_ege_hard)
+        img = question['image']
+        quest = question['question']
         await update.message.reply_text('Сложный уровень сложности:',
-                                        reply_markup=ReplyKeyboardRemove())
-        bot.send_photo(update.message.chat.id, photo=open('images/test_img.png', 'rb'),
-                       caption='...answer...')
+                                        reply_markup=markup)
+        bot.send_photo(update.message.chat.id, photo=open(img, 'rb'),
+                       caption=quest)
+        questions_used.append(question)
+        return 'check_answer'
+    if answer == 'практика/теория':
+        reply_keyboard = [['практика', 'теория']]
+        markup = ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=False)
+        await update.message.reply_text('Выберите свой путь!', reply_markup=markup)
+        return 'distribution'
 
 
 async def create_profile_user(update, context):
