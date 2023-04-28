@@ -237,12 +237,10 @@ async def distribution_fr(update, context):
     if answer == 'да' or answer == 'верно':
         reply_keyboard = [['практика', 'теория']]
         markup = ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=False)
-        context.user_data['fake_name'] = context.user_data['name']
         context.user_data['name'] = update.message.chat.first_name
 
-        cur.execute(f"""INSERT INTO statistics(id_users, really_name, fake_nickname)
-                        VALUES({context.user_data['id_user']}, '{context.user_data['name']},
-                         '{context.user_data['fake_name']}')""")
+        cur.execute(f"""INSERT INTO statistics(id_users, really_name)
+                        VALUES({context.user_data['id_user']}, '{context.user_data['name']}')""")
         con.commit()
 
         await update.message.reply_text(f"Мы - боты, развитые объекты, нас не так-то просто "
@@ -411,7 +409,7 @@ async def distribution_oge_or_ege(update, context):
                                             '3) сложная', reply_markup=markup)
             return 'distribution_oge'
         elif answer == 'ЕГЭ':
-            await update.message.reply_text('Вы выбрали - ОГЭ!\n'
+            await update.message.reply_text('Вы выбрали - ЕГЭ!\n'
                                             'Выберите сложность:\n'
                                             '1) лёгкая\n'
                                             '2) средняя\n'
